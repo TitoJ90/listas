@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planilha de Cadastro</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .logo {
+            width: 1000px;
+            height: 100px;
+            background-image: url('ARODAN.jpg');
+           
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+
+        .form-container {
+            max-width: 250px;
+            margin: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: small;
+        }
+
+        label {
+            display: flex;
+            margin: 10px 0 5px;
+        }
+
+        input, select {
+            width: 75%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .button-container {
+            display: flex;
+            gap: 1px;
+            margin-top: 10px;
+        }
+
+        button {
+            padding: 5px 4px;
+            border: none;
+            border-radius: 4px;
+            background-color: #007BFF;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .table-container {
+            max-width: 1000px;
+            margin: 20px auto;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f4f4f4;
+        }
+
+        footer {
+          
+            text-align: center;
+            margin-top: 100px;
+            padding: 6px;
+            background-color: #f4f4f4;
+            border-top: 1px solid #ccc;
+            font-size: small;
+            color: #666;
+            bottom: 100%;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo"></div>
+        </div>
+
+        <div class="table-container">
+            <h2>EMPRESAS CADASTRADAS</h2>
+            <table id="data-table">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Empresa</th>
+                        <th>NIF</th>
+                        <th>Localização</th>
+                        <th>Total</th>
+                        <th>Mês</th>
+                        <th>SELO</th>
+                        <th>IRT</th>
+                        <th>RF</th>
+                        <th>IP</th>
+                        <th>IVA</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Linhas serão preenchidas dinamicamente -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="form-container">
+            <h2>CADASTRO</h2>
+
+            <input type="number" id="cod" placeholder="Gerado automaticamente" >
+
+            <input type="text" id="empresa" placeholder="Digite o nome da empresa">
+
+            <input type="text" id="nif" placeholder="Digite o NIF">
+
+            <input type="text" id="localizacao" placeholder="Digite a localização">
+
+            <input type="number" id="total" placeholder="Digite o total" step="0.01">
+
+            <select id="mes">
+                <option value="Janeiro">Janeiro</option>
+                <option value="Fevereiro">Fevereiro</option>
+                <option value="Março">Março</option>
+                <option value="Abril">Abril</option>
+                <option value="Maio">Maio</option>
+                <option value="Junho">Junho</option>
+                <option value="Julho">Julho</option>
+                <option value="Agosto">Agosto</option>
+                <option value="Setembro">Setembro</option>
+                <option value="Outubro">Outubro</option>
+                <option value="Novembro">Novembro</option>
+                <option value="Dezembro">Dezembro</option>
+            </select>
+
+            <div class="button-container">
+                <button id="save">Cadastrar</button>
+                <button id="update" disabled>Atualizar</button>
+                <button id="delete" disabled>Apagar</button>
+                <button id="prev">Anterior</button>
+                <button id="next">Próximo</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let companies = JSON.parse(localStorage.getItem('companies')) || [
+            { cod: 1, empresa: "FONTE (SU), LDA", nif: "5001940783", localizacao: "Municipio de Viana", total: 250000, mes: "Janeiro", selo: false, irt: false, rf: false, ip: false, iva: false },
+            { cod: 2, empresa: "A. M. LUCALA", nif: "5000037753", localizacao: "ZANGO 3", total: 150000, mes: "Fevereiro", selo: false, irt: false, rf: false, ip: false, iva: false }
+        ];
+    
+        let currentIndex = -1;
+    
+        const codInput = document.getElementById('cod');
+        const empresaInput = document.getElementById('empresa');
+        const nifInput = document.getElementById('nif');
+        const localizacaoInput = document.getElementById('localizacao');
+        const totalInput = document.getElementById('total');
+    
+        const saveButton = document.getElementById('save');
+        const updateButton = document.getElementById('update');
+        const deleteButton = document.getElementById('delete');
+        const prevButton = document.getElementById('prev');
+        const nextButton = document.getElementById('next');
+    
+        const dataTable = document.getElementById('data-table').querySelector('tbody');
+    
+        function renderTable() {
+            dataTable.innerHTML = '';
+            companies.forEach((company, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${company.cod}</td>
+                    <td>${company.empresa}</td>
+                    <td>${company.nif}</td>
+                    <td>${company.localizacao}</td>
+                    <td>${company.total}</td>
+                    <td>${company.mes}</td>
+                    <td><input type="checkbox" ${company.selo ? 'checked' : ''}></td>
+                    <td><input type="checkbox" ${company.irt ? 'checked' : ''}></td>
+                    <td><input type="checkbox" ${company.rf ? 'checked' : ''}></td>
+                    <td><input type="checkbox" ${company.ip ? 'checked' : ''}></td>
+                    <td><input type="checkbox" ${company.iva ? 'checked' : ''}></td>
+                `;
+                dataTable.appendChild(row);
+            });
+        }
+    
+        function updateForm() {
+            if (currentIndex >= 0 && currentIndex < companies.length) {
+                const company = companies[currentIndex];
+                codInput.value = company.cod;
+                empresaInput.value = company.empresa;
+                nifInput.value = company.nif;
+                localizacaoInput.value = company.localizacao;
+                totalInput.value = company.total;
+            } else {
+                codInput.value = companies.length + 1;  // Código gerado automaticamente
+                empresaInput.value = '';
+                nifInput.value = '';
+                localizacaoInput.value = '';
+                totalInput.value = '';
+            }
+    
+            prevButton.disabled = currentIndex <= 0;
+            nextButton.disabled = currentIndex >= companies.length - 1;
+            updateButton.disabled = currentIndex === -1;
+            deleteButton.disabled = currentIndex === -1;
+        }
+    
+        saveButton.addEventListener('click', () => {
+            const cod = companies.length + 1;  // Código gerado automaticamente
+            const empresa = empresaInput.value.trim();
+            const nif = nifInput.value.trim();
+            const localizacao = localizacaoInput.value.trim();
+            const total = parseFloat(totalInput.value);
+    
+            if (empresa && nif) {
+                companies.push({ cod, empresa, nif, localizacao, total, mes: "Janeiro", selo: false, irt: false, rf: false, ip: false, iva: false });
+                localStorage.setItem('companies', JSON.stringify(companies));
+                alert('Cadastro salvo!');
+                currentIndex = companies.length - 1;
+                updateForm();
+                renderTable();
+    
+                // Limpar os dados dos inputs e colocar o foco no campo de empresa
+                empresaInput.value = '';
+                nifInput.value = '';
+                localizacaoInput.value = '';
+                totalInput.value = '';
+                empresaInput.focus();  // Coloca o foco no campo "empresa"
+            } else {
+                alert('Por favor, preencha todos os campos obrigatórios.');
+            }
+        });
+    
+        updateButton.addEventListener('click', () => {
+            if (currentIndex >= 0) {
+                companies[currentIndex] = {
+                    cod: parseInt(codInput.value),
+                    empresa: empresaInput.value.trim(),
+                    nif: nifInput.value.trim(),
+                    localizacao: localizacaoInput.value.trim(),
+                    total: parseFloat(totalInput.value),
+                    mes: "Janeiro",
+                    selo: false, irt: false, rf: false, ip: false, iva: false
+                };
+                localStorage.setItem('companies', JSON.stringify(companies));
+                alert('Cadastro atualizado!');
+                renderTable();
+            }
+        });
+    
+        deleteButton.addEventListener('click', () => {
+            if (currentIndex >= 0) {
+                companies.splice(currentIndex, 1);
+                localStorage.setItem('companies', JSON.stringify(companies));
+                alert('Cadastro apagado!');
+                currentIndex = companies.length - 1;
+                updateForm();
+                renderTable();
+            }
+        });
+    
+        prevButton.addEventListener('click', () => {
+            if (currentIndex > 0) {
+                currentIndex--;
+                updateForm();
+            }
+        });
+    
+        nextButton.addEventListener('click', () => {
+            if (currentIndex < companies.length - 1) {
+                currentIndex++;
+                updateForm();
+            }
+        });
+    
+        updateForm();
+        renderTable();
+    </script>
+    
+
+    <footer>
+        <p>Todos os direitos reservados &copy; 2024</p>
+        <p>Desenvolvido por <a href="https://www.linkedin.com/in/tito-j-2a53a3343">Aurodan Prestação de Serviços(SU).LDA</a></p>
+        <p>Versão: 1.0.0</p> <p>Licença: MIT - 23/12/24</p>
+        <p>TitoJ &copy; Telefone +244 923 626 315 </p>
+        <p>Contitec/Aurodan/Numina</p>
+    </footer>
+</body>
+</html>
